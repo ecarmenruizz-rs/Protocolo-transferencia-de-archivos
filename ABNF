@@ -1,0 +1,39 @@
+FALTA ERRORES  Y VER EL MÁXIMO DE LOS CÓDIGOS DE CONTROL 
+;---- Estructura general
+mensaje = control / datos 
+
+;---- Control
+control = "CTRL" SP codigo_control SP [flujo]
+codigo_control = 1DIGIT 
+flujo = <1> ALPHA <6>
+
+;---- Datos
+datos = "Msg" SP numero_secuencia SP [signo_puntuacion] palabra [signo_puntuacion] CRLF
+numero_secuencia = 2DIGIT
+palabra = <1>ALPHA / enie / vocal_tilde / vocal_dieresis<255>; Usamos un numero tan alto con el objetivo de recopilar incluso términos cientificos en ingles y español
+vocal_tilde = %xC1 / %xE1 / %xC9 / %xE9 / %xCD / %xED / %xD3 / %xF3 / %xDA / %xFA ; "ó" / "Ó" / "á" / "Á" / "é" / "É" / "í" / "Í" / "ú" / "Ú"
+vocal_dieresis = %xE4 / %xEB / %xEF / %xF6 / %xFC / %xC4 / %xCB / %xCF / %xD3 / %xDC
+enie = %xD1 / %xF1; "ñ" y "Ñ"
+signo_puntuacion = punto / coma / punto-y-coma / dos-puntos / guion / comilla-simple / comilla-doble / exclama-cierra / interroga-cierra / exclama-abre / interroga-abre / pare ntesis-abre / parentesis-cierra / corchete-abre / corchete-cierra / raya-guion-bajo
+
+;---- Signos Básicos ---
+punto           = %x2E    ; .
+coma            = %x2C    ; ,
+punto-y-coma    = %x3B    ; ;
+dos-puntos      = %x3A    ; :
+guion           = %x2D    ; -
+comilla-simple  = %x27    ; '
+comilla-doble   = %x22    ; "
+---- Signos de Exclamación e Interrogación ---
+exclama-cierra  = %x21    ; !
+interroga-cierra = %x3F    ; ?
+exclama-abre    = %xA1    ; ¡
+interroga-abre  = %xBF    ; ¿
+---- Paréntesis y Corchetes ---
+parentesis-abre  = %x28    ; (
+parentesis-cierra = %x29    ; )
+corchete-abre    = %x5B    ; [
+corchete-cierra   = %x5D    ; ]
+---- Otros Signos de Escritura ---
+puntos-suspensivos = punto punto punto ; ...
+raya-guion-bajo    = %x5F           ; _
