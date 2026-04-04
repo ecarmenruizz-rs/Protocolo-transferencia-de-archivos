@@ -2,7 +2,6 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.net.Socket;
 
 
@@ -28,34 +27,49 @@ public class cliente {
             in = new DataInputStream(clienteSocket.getInputStream());
             out = new DataOutputStream(clienteSocket.getOutputStream());
             
-            String mensaje;
-            String texto;
-                
-            String ID = "Jefe, 10";
+            
+           // Envio de ID al servidor                
+            String ID = "Jefe";
             out.writeUTF(ID); // envia al servidor la ID
             
-            do{
-                mensaje = in.readUTF(); //queda a la espera hasta que recibe un mensaje
-                texto = mensaje.substring(5); // elimino los 6 caracteres que son "Msg " + j + " "
-                numeroSecuencia = mensaje.charAt(4); // el numero de secuencia del mensaje recibido está en la posicion 4
-                contadorMsgs++;
-//                if (numeroSecuencia == contadorMsgs){
-//                    System.out.println(mensaje);
-//                }else{
-//                     
-//                }
-                System.out.println(mensaje);
-                System.out.println("----numeroSec" + numeroSecuencia  + "----contadormsgs: " + contadorMsgs + "-----" + texto);
+            String confirmacion = in.readUTF();
+            switch(confirmacion){
+                case "CTRL Accepted ID" -> {
+                    // Recepción del flujo
+                    String texto;
+                    String[] mensaje_div;
+                    String[] buffer;
 
-                
-                if (contadorMsgs >= 20){ //envio de un ACK cada 20 msgs recibidos
-                    System.out.println("Enviando ACK");
-                    out.writeUTF("ACK");
-                    contadorMsgs = 0;
+                    do{
+                        String mensaje = in.readUTF(); //queda a la espera hasta que recibe un mensaje, que es de la forma "Msg" + nº secuencia + palabra correspondiente
+                        mensaje_div = mensaje.split(" ");      // Divido el string por espacios para obtener los distintos campos
+                        texto = mensaje_div[2];                         // vease el ABNF de este tipo de mensajes: "Msg" SP numero_secuencia SP [signo_puntuacion] palabra [signo_puntuacion] CRLF
+                        numeroSecuencia = Integer.parseInt(mensaje_div[1]);     //Convierto los caracteres correspondientes al numero a un entero
+
+                        System.out.print(mensaje_div[2] + " ");
+
+                        //System.out.println("----numeroSec " + numeroSecuencia  + "----contadormsgs: " + contadorMsgs + "-----" + texto);
+                        contadorMsgs++;
+                        
+                        
+                        if (contadorMsgs >= 20){ //envio de un ACK cada 20 msgs recibidos
+                            //System.out.println("Enviando ACK");
+                            out.writeUTF("ACK");
+                            contadorMsgs = 0;
+                        }
+
+                    }while (!"CTRL 6".equals(mensaje_div[0] + mensaje_div[1]));
+                }
+                case "CTRL Denied ID" -> {
+                    // error,
+
+                }
+                default -> {
+                    // error, mal implementado
                 }
                 
-            }while (!"CLOSED".equals(mensaje));
-            
+            }
+                
             
             clienteSocket.close(); //cierra la conexion con el cliente
             System.out.println("Desconectado");
