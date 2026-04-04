@@ -10,13 +10,12 @@ import java.net.Socket;
  * @author infer
  */
 public class servidor { 
-    public static void main(String[] args){
+    public static void main(String[] args) throws InterruptedException{
         ServerSocket servidorSocket = null;
         Socket clienteSocket = null;
         DataInputStream in;
         DataOutputStream out;
         
-        //final int TAMANIO_PAQUETE = 10; //medido en numero de caracteres
         final int puertoEscucha = 5555;
         final int numeroPalabrasSinACK = 20; // numero de palabras que el servidor envia sin necesidad de recibir ACK
         
@@ -42,13 +41,13 @@ public class servidor {
                 
                 // Inicio de sesión
                 if (IDComprobar){ // el cliente ha introducido la ID correcta
-                    out.writeUTF("CTRL Accepted ID");
+                    out.writeUTF("CTRL 2");
                     
                     System.out.println("Comienza el envio");
                     
                     
                     int i = 0; //iterador que define el grupo de palabras en el que estamos
-
+                    
                     do{
                         
                         for (int j = 0; j < numeroPalabrasSinACK; j++){
@@ -59,6 +58,11 @@ public class servidor {
                                 out.writeUTF("Msg " + (j+i*numeroPalabrasSinACK) + " " + texto_div[j+i*numeroPalabrasSinACK]);
                                 System.out.println("Msg " + (j+i*numeroPalabrasSinACK) + " " + texto_div[j+i*numeroPalabrasSinACK]);                                                
                                 //System.out.println((i*numeroPalabrasSinACK+j) + " <= " + (texto_div.length ));
+                                Thread.sleep(10); //Espera 10 ms
+                            }
+                            
+                            if (i*numeroPalabrasSinACK+j >= texto_div.length){
+                               
                             }
                         }
 
@@ -67,11 +71,13 @@ public class servidor {
                         i++; //pasa al siguiente grupo de palabras
                         
                         
-                    }while("ACK".equals(ACKrecibido));
+                        
+                        
+                    }while("CTRL 4".equals(ACKrecibido));
                     
                     
                 }else{
-                    out.writeUTF("CTRL Denied ID");
+                    out.writeUTF("CTRL 3");
                 }           
                 
                 

@@ -18,6 +18,7 @@ public class cliente {
         final int PUERTO = 5555;
         DataInputStream in;
         DataOutputStream out;
+        final int numeroPalabrasSinACK = 20; // numero de palabras que el servidor envia sin necesidad de recibir ACK
         int contadorMsgs = 0;
         int numeroSecuencia;
         try {
@@ -33,12 +34,13 @@ public class cliente {
             out.writeUTF(ID); // envia al servidor la ID
             
             String confirmacion = in.readUTF();
+            System.out.println ("Confirmacion del servidor recibida");
             switch(confirmacion){
-                case "CTRL Accepted ID" -> {
+                case "CTRL 2" -> {
                     // Recepción del flujo
+                    System.out.println("Recibiendo");
                     String texto;
                     String[] mensaje_div;
-                    String[] buffer;
 
                     do{
                         String mensaje = in.readUTF(); //queda a la espera hasta que recibe un mensaje, que es de la forma "Msg" + nº secuencia + palabra correspondiente
@@ -46,21 +48,23 @@ public class cliente {
                         texto = mensaje_div[2];                         // vease el ABNF de este tipo de mensajes: "Msg" SP numero_secuencia SP [signo_puntuacion] palabra [signo_puntuacion] CRLF
                         numeroSecuencia = Integer.parseInt(mensaje_div[1]);     //Convierto los caracteres correspondientes al numero a un entero
 
-                        System.out.print(mensaje_div[2] + " ");
+                        System.out.print(texto + " ");
 
                         //System.out.println("----numeroSec " + numeroSecuencia  + "----contadormsgs: " + contadorMsgs + "-----" + texto);
                         contadorMsgs++;
                         
                         
-                        if (contadorMsgs >= 20){ //envio de un ACK cada 20 msgs recibidos
+                        if (contadorMsgs % numeroPalabrasSinACK == 0){ //envio de un ACK cada 20 msgs recibidos
                             //System.out.println("Enviando ACK");
-                            out.writeUTF("ACK");
-                            contadorMsgs = 0;
+                            out.writeUTF("CTRL 4");
                         }
-
-                    }while (!"CTRL 6".equals(mensaje_div[0] + mensaje_div[1]));
+                        
+                        //if(contadorMsgs == 397)
+                          //  out.writeUTF("CTRL 7");
+                        
+                    }while (!"CTRL 7".equals(mensaje_div[0] + mensaje_div[1]));
                 }
-                case "CTRL Denied ID" -> {
+                case "CTRL 3" -> {
                     // error,
 
                 }
