@@ -47,8 +47,9 @@ public class cliente {
                         mensaje_div = mensaje.split(" ");      // Divido el string por espacios para obtener los distintos campos
                         texto = mensaje_div[2];                         // vease el ABNF de este tipo de mensajes: "Msg" SP numero_secuencia SP [signo_puntuacion] palabra [signo_puntuacion] CRLF
                         numeroSecuencia = Integer.parseInt(mensaje_div[1]);     //Convierto los caracteres correspondientes al numero a un entero
-
-                        System.out.print(texto + " ");
+                        
+                        // Mostrar el texto recibido
+                        System.out.println(numeroSecuencia + " " + texto + " ");
 
                         //System.out.println("----numeroSec " + numeroSecuencia  + "----contadormsgs: " + contadorMsgs + "-----" + texto);
                         contadorMsgs++;

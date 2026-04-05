@@ -58,7 +58,7 @@ public class servidor {
                                 out.writeUTF("Msg " + (j+i*numeroPalabrasSinACK) + " " + texto_div[j+i*numeroPalabrasSinACK]);
                                 System.out.println("Msg " + (j+i*numeroPalabrasSinACK) + " " + texto_div[j+i*numeroPalabrasSinACK]);                                                
                                 //System.out.println((i*numeroPalabrasSinACK+j) + " <= " + (texto_div.length ));
-                                Thread.sleep(10); //Espera 10 ms
+                                //Thread.sleep(10); //Espera 10 ms
                             }
                             
                             if (i*numeroPalabrasSinACK+j >= texto_div.length){
