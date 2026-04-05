@@ -82,10 +82,9 @@ public class cliente {
 
     // ── Utilidades de salida ─────────────────────────────────────────────────
 
-    /** Imprime una palabra del stream en la misma línea, separada por espacio. */
-    private static void palabra(String w) {
-        System.out.print(w + " ");
-        System.out.flush();
+    /** Imprime cada palabra del stream en su propia línea con su número de secuencia. */
+    private static void palabra(String seq, String w) {
+        System.out.println("[Cliente] #" + seq + " -> " + w);
     }
 
     /** Imprime un mensaje de control en su propia línea (con salto antes y después). */
@@ -121,7 +120,7 @@ public class cliente {
             String[] partes = mensaje.split(" ", 3);
             if (partes.length < 3) { controlMsg("Malformado: " + mensaje); continue; }
 
-            palabra(partes[2]);
+            palabra(partes[1], partes[2]);
 
             contadorBloque++;
             if (contadorBloque >= PALABRAS_POR_BLOQUE) {
