@@ -19,14 +19,15 @@
 ### Formato: CTRL [codigo]
 - 0: enviar ID
 	- Ejemplo: CTRL 0 Quijote
-- 1: 
-- 2: Accepted ID
+- 1: Cliente lento aceptado
 	- CTRL 1
-- 3: Denied ID
+- 2: Accepted ID
 	- CTRL 2
+- 3: Denied ID
+	- CTRL 3
 - 4: ACK (cada 20 msgs por ejemplo, configurable)
 	- CTRL 4
-- 5: detecto cliente lento (su buffer está lleno)
+- 5: detecto cliente lento (el cliente detecta que ha perdido un paquete)
 	- CTRL 5
 - 6: Solicito CLOSED
 	- CTRL 6
