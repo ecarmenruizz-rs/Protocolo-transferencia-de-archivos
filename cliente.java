@@ -4,16 +4,15 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-
 /**
  *
  * @author infer
- * 
+ *
  */
-
 public class cliente {
-    public static void main(String[] args){
-        
+
+    public static void main(String[] args) {
+
         final String IP_SERVER = "127.0.0.1";
         final int PUERTO = 5555;
         DataInputStream in;
@@ -22,48 +21,72 @@ public class cliente {
         int contadorMsgs = 0;
         int numeroSecuencia;
         try {
-            
+
             Socket clienteSocket = new Socket(IP_SERVER, PUERTO);
-            
+
             in = new DataInputStream(clienteSocket.getInputStream());
             out = new DataOutputStream(clienteSocket.getOutputStream());
-            
-            
-           // Envio de ID al servidor                
+
+            // Envio de ID al servidor                
             String ID = "Jefe";
             out.writeUTF(ID); // envia al servidor la ID
-            
+
             String confirmacion = in.readUTF();
-            System.out.println ("Confirmacion del servidor recibida");
-            switch(confirmacion){
+            System.out.println("Confirmacion del servidor recibida");
+            switch (confirmacion) {
                 case "CTRL 2" -> {
                     // Recepción del flujo
                     System.out.println("Recibiendo");
                     String texto;
-                    String[] mensaje_div;
+                    String mensaje;
+                    String[] mensaje_div = null;
+                    
+                    do {
+                        // Solicitar parar de enviar si se pulsa la tecla p
+                        if (System.in.available() > 0) { 
+                            // El código entra aquí SOLO si el usuario ha escrito algo y pulsado Enter
+                            String input = in.readUTF(); // 'stdIn' debe ser un BufferedReader de System.in
 
-                    do{
-                        String mensaje = in.readUTF(); //queda a la espera hasta que recibe un mensaje, que es de la forma "Msg" + nº secuencia + palabra correspondiente
-                        mensaje_div = mensaje.split(" ");      // Divido el string por espacios para obtener los distintos campos
-                        texto = mensaje_div[2];                         // vease el ABNF de este tipo de mensajes: "Msg" SP numero_secuencia SP [signo_puntuacion] palabra [signo_puntuacion] CRLF
-                        numeroSecuencia = Integer.parseInt(mensaje_div[1]);     //Convierto los caracteres correspondientes al numero a un entero
+                            // Aquí gestionas qué tecla o comando se pulsó
+                            if (input.equalsIgnoreCase("p")) {
+                                // Enviar comando de pausa al servidor
+                                
+                            }
+                            
+                            
+                                
                         
-                        // Mostrar el texto recibido
-                        System.out.println(numeroSecuencia + " " + texto + " ");
+                        // Recepción de mensajes
+                        } else {
+                            mensaje = in.readUTF(); //queda a la espera hasta que recibe un mensaje, que es de la forma "Msg" + nº secuencia + palabra correspondiente
+                            mensaje_div = mensaje.split(" ");      // Divido el string por espacios para obtener los distintos campos
+                            texto = mensaje_div[2];                         // vease el ABNF de este tipo de mensajes: "Msg" SP numero_secuencia SP [signo_puntuacion] palabra [signo_puntuacion] CRLF
+                            numeroSecuencia = Integer.parseInt(mensaje_div[1]);     //Convierto los caracteres correspondientes al numero a un entero
 
-                        //System.out.println("----numeroSec " + numeroSecuencia  + "----contadormsgs: " + contadorMsgs + "-----" + texto);
-                        contadorMsgs++;
-                        
-                        
-                        if (contadorMsgs % numeroPalabrasSinACK == 0){ //envio de un ACK cada 20 msgs recibidos
-                            //System.out.println("Enviando ACK");
-                            out.writeUTF("CTRL 4");
+                            // Mostrar el texto recibido
+                            System.out.println(numeroSecuencia + " " + texto + " ");
+
+                            //System.out.println("----numeroSec " + numeroSecuencia  + "----contadormsgs: " + contadorMsgs + "-----" + texto);
+                            if(numeroSecuencia == contadorMsgs)                                
+                                contadorMsgs++;
+                            else if (contadorMsgs % numeroPalabrasSinACK == 0) { //envio de un ACK cada 20 msgs recibidos
+                                //System.out.println("Enviando ACK");
+                                out.writeUTF("CTRL 4");
+                                }else{
+                                    out.writeUTF("CTRL 5"); // Se ha perdido un mensaje por buffer lleno => inicio cliente lento
+                                    if ("CTRL 1".equals(in.readUTF()) )
+                                        System.out.println("Cliente lento aceptado y ejecutandose");
+                                    else{
+                                        System.out.println("Cliente lento no aceptado, cerrando comunicacion");
+                                        mensaje = CerrarComunicacion(in, out);
+                                    }
+                                }
+
+                            //if(contadorMsgs == 397)
+                            //  out.writeUTF("CTRL 7");
                         }
-                        
-                        //if(contadorMsgs == 397)
-                          //  out.writeUTF("CTRL 7");
-                        
-                    }while (!"CTRL 7".equals(mensaje_div[0] + mensaje_div[1]));
+
+                    } while (!"CTRL 7".equals(mensaje_div[0] + mensaje_div[1]));
                 }
                 case "CTRL 3" -> {
                     // error,
@@ -72,17 +95,32 @@ public class cliente {
                 default -> {
                     // error, mal implementado
                 }
-                
+
             }
-                
-            
+
             clienteSocket.close(); //cierra la conexion con el cliente
             System.out.println("Desconectado");
         } catch (IOException ex) {
             System.getLogger(cliente.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
         }
-            
-            
-       
+
+    }
+    public static String CerrarComunicacion(DataInputStream in, DataOutputStream out) throws IOException {
+        out.writeUTF("CTRL 6");
+        boolean parado = false;
+        String senalParada = null;
+        for (int i = 0; i < 3 && !parado; i++) { // se comprueba 3 veces si se recibe el mensaje de parada
+            senalParada = in.readUTF();
+            if (senalParada.equals("CTRL 7")) {
+                parado = true;
+                System.out.println("Se ha parado la comunicacion correctamente");
+            }
+        }
+
+        if (parado == false) {
+            System.out.println("Se ha parado de manera forzada, el servidor no confirma");
+        }
+        
+        return senalParada;
     }
 }
