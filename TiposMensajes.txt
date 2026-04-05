@@ -1,5 +1,6 @@
 # Mensajes
 ## Tipo 0 Errores:
+### Formato: Err [codigo]
 - 0: mal formato ABNF
 	- envie 0 
 - 1: usuario y contraseña mal
