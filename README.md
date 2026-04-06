@@ -45,4 +45,4 @@ Java cliente
 Una vez que se inició la sesión con el ID “Jefe”, el cliente puede interactuar con los siguientes comandos por teclado:
 -	p (pausa): detiene la recepción de datos. El servidor entra en un estado de espera hasta que se envíe una p nuevamente para reanudar el envío de datos.
 -	s (slow mode): Activa un retardo de 200 milisegundos entre palabras. Útil para entornos con baja capacidad de procesamiento.
--	Q (quit) :Finaliza la conexión de forma segura, informando al servidor para que libere los recursos del hilo.
+-	q (quit) :Finaliza la conexión de forma segura, informando al servidor para que libere los recursos del hilo.
