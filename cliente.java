@@ -9,7 +9,7 @@ import java.net.Socket;
  * Cliente de streaming continuo.
  *
  * === PROTOCOLO ===
- *  Alta              : cliente -> servidor  : ID
+ *  Alta              : cliente -> servidor  : "CTRL 0 <id>"
  *  Confirmación OK   : servidor -> cliente  : "CTRL 2"
  *  Confirmación KO   : servidor -> cliente  : "CTRL 3"
  *  Mensaje flujo     : servidor -> cliente  : "Msg" SP seq SP palabra
@@ -27,6 +27,7 @@ import java.net.Socket;
  *   p  -> pausa / reanuda el stream
  *   s  -> solicitar al servidor que active/desactive modo lento
  *   q  -> cierre ordenado
+ *
  */
 public class cliente {
 
@@ -34,6 +35,7 @@ public class cliente {
     static final int    PUERTO              = 5555;
     static final int    PALABRAS_POR_BLOQUE = 20;
 
+    static final String CTRL_ID          = "CTRL 0";
     static final String CTRL_OK          = "CTRL 2";
     static final String CTRL_ID_KO       = "CTRL 3";
     static final String CTRL_ACK         = "CTRL 4";
@@ -56,22 +58,23 @@ public class cliente {
             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
             outGlobal = out;
 
-            out.writeUTF("Jefe");
+            out.writeUTF(CTRL_ID + " " + "Jefe");
 
             String confirmacion = in.readUTF();
 
-            switch (confirmacion) {
-                case CTRL_OK -> {
-                    controlMsg("Sesión iniciada. Comandos: 'p'=pausa  's'=modo lento  'q'=salir");
+            if (CTRL_OK.equals(confirmacion)) {
+                controlMsg("Sesión iniciada. Comandos: 'p'=pausa  's'=modo lento  'q'=salir");
 
-                    Thread hiloTeclado = new Thread(cliente::leerTeclado, "teclado");
-                    hiloTeclado.setDaemon(true);
-                    hiloTeclado.start();
+                Thread hiloTeclado = new Thread(cliente::leerTeclado, "teclado");
+                hiloTeclado.setDaemon(true);
+                hiloTeclado.start();
 
-                    recibirFlujo(in, out);
-                }
-                case CTRL_ID_KO -> controlMsg("ID rechazada por el servidor.");
-                default         -> controlMsg("Respuesta desconocida: " + confirmacion);
+                recibirFlujo(in, out);
+
+            } else if (CTRL_ID_KO.equals(confirmacion)) {
+                controlMsg("ID rechazada por el servidor.");
+            } else {
+                controlMsg("Respuesta desconocida: " + confirmacion);
             }
 
         } catch (IOException ex) {
@@ -82,12 +85,10 @@ public class cliente {
 
     // ── Utilidades de salida ─────────────────────────────────────────────────
 
-    /** Imprime cada palabra del stream en su propia línea con su número de secuencia. */
     private static void palabra(String seq, String w) {
         System.out.println("[Cliente] #" + seq + " -> " + w);
     }
 
-    /** Imprime un mensaje de control en su propia línea (con salto antes y después). */
     private static void controlMsg(String msg) {
         System.out.println("\n[" + msg + "]");
         System.out.flush();
@@ -103,29 +104,29 @@ public class cliente {
                 mensaje = in.readUTF();
             } catch (IOException ex) {
                 if (!terminado) throw ex;
-                break;
+                mensaje = null;
             }
 
-            if (mensaje.startsWith("CTRL")) {
-                boolean continuar = procesarControlServidor(mensaje, in, out);
-                if (!continuar) break;
-                continue;
-            }
+            if (mensaje != null) {
+                if (mensaje.startsWith("CTRL")) {
+                    boolean continuar = procesarControlServidor(mensaje, in, out);
+                    terminado = terminado || !continuar;
 
-            if (!mensaje.startsWith("Msg")) {
-                controlMsg("Desconocido: " + mensaje);
-                continue;
-            }
-
-            String[] partes = mensaje.split(" ", 3);
-            if (partes.length < 3) { controlMsg("Malformado: " + mensaje); continue; }
-
-            palabra(partes[1], partes[2]);
-
-            contadorBloque++;
-            if (contadorBloque >= PALABRAS_POR_BLOQUE) {
-                out.writeUTF(CTRL_ACK);
-                contadorBloque = 0;
+                } else if (mensaje.startsWith("Msg")) {
+                    String[] partes = mensaje.split(" ", 3);
+                    if (partes.length < 3) {
+                        controlMsg("Malformado: " + mensaje);
+                    } else {
+                        palabra(partes[1], partes[2]);
+                        contadorBloque++;
+                        if (contadorBloque >= PALABRAS_POR_BLOQUE) {
+                            out.writeUTF(CTRL_ACK);
+                            contadorBloque = 0;
+                        }
+                    }
+                } else {
+                    controlMsg("Desconocido: " + mensaje);
+                }
             }
         }
     }
@@ -133,33 +134,30 @@ public class cliente {
     // ── Procesar señales de control del servidor ─────────────────────────────
     private static boolean procesarControlServidor(String msg, DataInputStream in, DataOutputStream out)
             throws IOException {
-        switch (msg) {
+        boolean continuar = true;
 
-            case CTRL_CLOSE_SRV:
-                controlMsg("Fin de stream.");
-                terminado = true;
-                return false;
+        if (CTRL_CLOSE_SRV.equals(msg)) {
+            controlMsg("Fin de stream.");
+            terminado = true;
+            continuar = false;
 
-            case CTRL_SLOW:
-                // El servidor detectó que vamos lentos: aceptamos modo lento.
-                out.writeUTF(CTRL_SLOW_ACCEPT);
-                String confirm = in.readUTF();
-                if (CTRL_SLOW_ACCEPT.equals(confirm)) {
-                    controlMsg("Modo lento activado por el servidor");
-                } else {
-                    controlMsg("Respuesta inesperada tras aviso lento: " + confirm);
-                }
-                return true;
+        } else if (CTRL_SLOW.equals(msg)) {
+            out.writeUTF(CTRL_SLOW_ACCEPT);
+            String confirm = in.readUTF();
+            if (CTRL_SLOW_ACCEPT.equals(confirm)) {
+                controlMsg("Modo lento activado por el servidor");
+            } else {
+                controlMsg("Respuesta inesperada tras aviso lento: " + confirm);
+            }
 
-            case CTRL_SLOW_ACCEPT:
-                // Confirmación del servidor tras nuestra solicitud de toggle (tecla 's')
-                controlMsg("Modo lento confirmado por el servidor");
-                return true;
+        } else if (CTRL_SLOW_ACCEPT.equals(msg)) {
+            controlMsg("Modo lento confirmado por el servidor");
 
-            default:
-                controlMsg("Control desconocido del servidor: " + msg);
-                return true;
+        } else {
+            controlMsg("Control desconocido del servidor: " + msg);
         }
+
+        return continuar;
     }
 
     // ── Hilo de teclado ──────────────────────────────────────────────────────
@@ -168,40 +166,36 @@ public class cliente {
         try {
             while (!terminado) {
                 String linea = teclado.readLine();
-                if (linea == null) break;
-                linea = linea.trim().toLowerCase();
-                if (outGlobal == null) continue;
-
-                switch (linea) {
-                    case "p":
-                        if (!pausado) {
-                            pausado = true;
-                            outGlobal.writeUTF(CTRL_PAUSE);
-                            controlMsg("Stream PAUSADO  (escribe 'p' para reanudar)");
-                        } else {
-                            pausado = false;
-                            outGlobal.writeUTF(CTRL_RESUME);
-                            controlMsg("Stream REANUDADO");
-                        }
-                        break;
-
-                    case "s":
-                        outGlobal.writeUTF(CTRL_SLOW);
-                        controlMsg("Solicitud modo lento enviada");
-                        break;
-
-                    case "q":
-                        terminado = true;
-                        outGlobal.writeUTF(CTRL_CLOSE_CLI);
-                        controlMsg("Cerrando...");
-                        break;
-
-                    default:
-                        controlMsg("Comando desconocido. Usa 'p', 's' o 'q'");
+                if (linea != null && outGlobal != null) {
+                    procesarComando(linea.trim().toLowerCase());
                 }
             }
         } catch (IOException ex) {
             if (!terminado) controlMsg("Error teclado: " + ex.getMessage());
+        }
+    }
+
+    // ── Procesar comando de teclado ──────────────────────────────────────────
+    private static void procesarComando(String linea) throws IOException {
+        if ("p".equals(linea)) {
+            if (!pausado) {
+                pausado = true;
+                outGlobal.writeUTF(CTRL_PAUSE);
+                controlMsg("Stream PAUSADO  (escribe 'p' para reanudar)");
+            } else {
+                pausado = false;
+                outGlobal.writeUTF(CTRL_RESUME);
+                controlMsg("Stream REANUDADO");
+            }
+        } else if ("s".equals(linea)) {
+            outGlobal.writeUTF(CTRL_SLOW);
+            controlMsg("Solicitud modo lento enviada");
+        } else if ("q".equals(linea)) {
+            terminado = true;
+            outGlobal.writeUTF(CTRL_CLOSE_CLI);
+            controlMsg("Cerrando...");
+        } else {
+            controlMsg("Comando desconocido. Usa 'p', 's' o 'q'");
         }
     }
 }
