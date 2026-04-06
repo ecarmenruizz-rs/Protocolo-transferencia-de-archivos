@@ -8,21 +8,6 @@ import java.net.Socket;
 /**
  * Cliente de streaming continuo.
  *
- * === PROTOCOLO ===
- *  Alta              : cliente -> servidor  : "CTRL 0 <id>"
- *  Confirmación OK   : servidor -> cliente  : "CTRL 2"
- *  Confirmación KO   : servidor -> cliente  : "CTRL 3"
- *  Mensaje flujo     : servidor -> cliente  : "Msg" SP seq SP palabra
- *  ACK               : cliente -> servidor  : "CTRL 4"  (cada PALABRAS_POR_BLOQUE palabras)
- *  Slow aviso        : servidor -> cliente  : "CTRL 5"
- *  Slow solicitud    : cliente -> servidor  : "CTRL 5"  (toggle vía teclado)
- *  Slow accept       : cliente -> servidor  : "CTRL 1"
- *  Slow confirmación : servidor -> cliente  : "CTRL 1"
- *  Pausa             : cliente -> servidor  : "CTRL 8"
- *  Reanudación       : cliente -> servidor  : "CTRL 9"
- *  Cierre cliente    : cliente -> servidor  : "CTRL 6"
- *  Cierre servidor   : servidor -> cliente  : "CTRL 7"
- *
  * Comandos de teclado (escribir y pulsar Enter):
  *   p  -> pausa / reanuda el stream
  *   s  -> solicitar al servidor que active/desactive modo lento
