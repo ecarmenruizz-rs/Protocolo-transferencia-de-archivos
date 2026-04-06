@@ -10,28 +10,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Servidor de streaming continuo con control de flujo y gestión de clientes lentos.
- *
- * === PROTOCOLO ===
- *  Alta              : cliente -> servidor  : "CTRL 0 <id>"
- *  Confirmación OK   : servidor -> cliente  : "CTRL 2"
- *  Confirmación KO   : servidor -> cliente  : "CTRL 3"
- *  Mensaje flujo     : servidor -> cliente  : "Msg" SP seq SP palabra
- *  ACK               : cliente -> servidor  : "CTRL 4"  (cada PALABRAS_POR_BLOQUE palabras)
- *  Slow aviso        : servidor -> cliente  : "CTRL 5"  (timeout detectado por servidor)
- *  Slow solicitud    : cliente -> servidor  : "CTRL 5"  (el cliente pide modo lento)
- *  Slow accept       : cliente -> servidor  : "CTRL 1"
- *  Slow confirmación : servidor -> cliente  : "CTRL 1"
- *  Pausa             : cliente -> servidor  : "CTRL 8"
- *  Reanudación       : cliente -> servidor  : "CTRL 9"
- *  Cierre cliente    : cliente -> servidor  : "CTRL 6"
- *  Cierre servidor   : servidor -> cliente  : "CTRL 7"
- *
- * ARQUITECTURA:
- *   - Hilo lector : lee TODOS los mensajes del cliente y los mete en una cola.
- *   - Hilo emisor : consume la cola para reaccionar a controles y envía el flujo.
- *
- * ESTILO: programación estructurada — un único punto de retorno por método,
- *         sin break fuera de switch, sin continue.
  */
 public class servidor {
 
