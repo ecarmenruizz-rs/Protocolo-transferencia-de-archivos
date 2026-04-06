@@ -1,10 +1,10 @@
-FALTA ERRORES  Y VER EL MÁXIMO DE LOS CÓDIGOS DE CONTROL 
+VER EL MÁXIMO DE LOS CÓDIGOS DE CONTROL 
 ;---- Estructura general
 mensaje = control / datos / error
 
 ;---- Control
 control = "CTRL" SP codigo_control SP [flujo]
-codigo_control = 1DIGIT 
+codigo_control = %x30-x39 ; Los codigos de control van del 0 al 9 
 flujo = <1> ALPHA <6>
 
 ;---- Error
