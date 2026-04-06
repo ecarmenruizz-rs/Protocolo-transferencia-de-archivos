@@ -17,7 +17,7 @@ POS-DIGIT = %x31-39
             
 palabra = <1>ALPHA / enie / vocal_tilde / vocal_dieresis<255>; Usamos un numero tan alto con el objetivo de recopilar incluso términos cientificos en ingles y español
 vocal_tilde = %xC1 / %xE1 / %xC9 / %xE9 / %xCD / %xED / %xD3 / %xF3 / %xDA / %xFA ; "ó" / "Ó" / "á" / "Á" / "é" / "É" / "í" / "Í" / "ú" / "Ú"
-vocal_dieresis = %xE4 / %xEB / %xEF / %xF6 / %xFC / %xC4 / %xCB / %xCF / %xD3 / %xDC
+vocal_dieresis = %xE4 / %xEB / %xEF / %xF6 / %xFC / %xC4 / %xCB / %xCF / %xD3 / %xDC; "ä" / "ë" / "ï" / "ö" / "ü" / "Ä" / "Ë" / "Ï" / "Ó" / "Ü"
 enie = %xD1 / %xF1; "ñ" y "Ñ"
 signo_puntuacion = punto / coma / punto-y-coma / dos-puntos / guion / comilla-simple / comilla-doble / exclama-cierra / interroga-cierra / exclama-abre / interroga-abre / pare ntesis-abre / parentesis-cierra / corchete-abre / corchete-cierra / raya-guion-bajo
 
