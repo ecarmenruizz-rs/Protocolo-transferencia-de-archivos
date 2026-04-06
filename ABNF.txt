@@ -1,11 +1,10 @@
-VER EL MÁXIMO DE LOS CÓDIGOS DE CONTROL 
 ;---- Estructura general
 mensaje = control / datos / error
 
 ;---- Control
-control = "CTRL" SP codigo_control SP [flujo]
+control = "CTRL" SP codigo_control SP [user]
 codigo_control = %x30-x39 ; Los codigos de control van del 0 al 9 
-flujo = <1> ALPHA <6>
+user = <1> ALPHA <6>; usuario con el que se autentica en el mensaje de ID (CTRL 0)
 
 ;---- Error
 error = "ERR" SP codigo_error
