@@ -1,0 +1,44 @@
+;---- Estructura general
+mensaje = control / datos / error
+
+;---- Control
+control = "CTRL" SP codigo_control SP [user]
+codigo_control = %x30-x39 ; Los codigos de control van del 0 al 9 
+user = <1> ALPHA <6>; usuario con el que se autentica en el mensaje de ID (CTRL 0)
+
+;---- Error
+error = "ERR" SP codigo_error
+codigo_error = %x30-35 ; los codigos de error van del 0 al 5
+
+;---- Datos
+datos = "Msg" SP numero_secuencia SP [signo_puntuacion] palabra 1*3[signo_puntuacion]; los datos pueden contener signos de puntuacion delante o detras de la palabra. El maximo por delante es 1 y el maximo por detras es 3 debido a los puntos suspensivos.
+numero_secuencia = 0" / (POS-DIGIT *9DIGIT); el numero de secuencia no puede ser negativo. El valor maximo es el de un int, 2147483647 = 2^31-1 al tomar solo positivos.
+POS-DIGIT = %x31-39
+            
+palabra = <1>ALPHA / enie / vocal_tilde / vocal_dieresis<255>; Usamos un numero tan alto con el objetivo de recopilar incluso términos cientificos en ingles y español
+vocal_tilde = %xC1 / %xE1 / %xC9 / %xE9 / %xCD / %xED / %xD3 / %xF3 / %xDA / %xFA ; "ó" / "Ó" / "á" / "Á" / "é" / "É" / "í" / "Í" / "ú" / "Ú"
+vocal_dieresis = %xE4 / %xEB / %xEF / %xF6 / %xFC / %xC4 / %xCB / %xCF / %xD3 / %xDC; "ä" / "ë" / "ï" / "ö" / "ü" / "Ä" / "Ë" / "Ï" / "Ó" / "Ü"
+enie = %xD1 / %xF1; "ñ" y "Ñ"
+signo_puntuacion = punto / coma / punto-y-coma / dos-puntos / guion / comilla-simple / comilla-doble / exclama-cierra / interroga-cierra / exclama-abre / interroga-abre / pare ntesis-abre / parentesis-cierra / corchete-abre / corchete-cierra / raya-guion-bajo
+
+;---- Signos Básicos ---
+punto           = %x2E    ; .
+coma            = %x2C    ; ,
+punto-y-coma    = %x3B    ; ;
+dos-puntos      = %x3A    ; :
+guion           = %x2D    ; -
+comilla-simple  = %x27    ; '
+comilla-doble   = %x22    ; "
+---- Signos de Exclamación e Interrogación ---
+exclama-cierra  = %x21    ; !
+interroga-cierra = %x3F    ; ?
+exclama-abre    = %xA1    ; ¡
+interroga-abre  = %xBF    ; ¿
+---- Paréntesis y Corchetes ---
+parentesis-abre  = %x28    ; (
+parentesis-cierra = %x29    ; )
+corchete-abre    = %x5B    ; [
+corchete-cierra   = %x5D    ; ]
+---- Otros Signos de Escritura ---
+puntos-suspensivos = punto punto punto ; ...
+raya-guion-bajo    = %x5F           ; _
