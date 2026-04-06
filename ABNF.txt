@@ -1,11 +1,15 @@
 FALTA ERRORES  Y VER EL MÁXIMO DE LOS CÓDIGOS DE CONTROL 
 ;---- Estructura general
-mensaje = control / datos 
+mensaje = control / datos / error
 
 ;---- Control
 control = "CTRL" SP codigo_control SP [flujo]
 codigo_control = 1DIGIT 
 flujo = <1> ALPHA <6>
+
+;---- Error
+error = "ERR" SP codigo_error
+codigo_error = %x30-35 ; los codigos de error van del 0 al 5
 
 ;---- Datos
 datos = "Msg" SP numero_secuencia SP [signo_puntuacion] palabra [signo_puntuacion] CRLF
