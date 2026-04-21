@@ -31,5 +31,13 @@
 	- CTRL 8
 - 9: Reanudar
 	- CTRL 9
+ static final String CTRL_OK = "CTRL 2"; // acepted ID
+    static final String CTRL_ENVIAR_ID = "CTRL 0" ;
+    static final String CTRL_ID_MAL = "CTRL 3";
+    static final String CTRL_ACK = "CTRL 4";
+    static final String CTRL_CLOSE_CLI = "CTRL 6";
+    static final String CTRL_CLOSE_SRV = "CTRL 7"; // CLOSE ACEPTADOR POR EL SERVIDOR
+    static final String CTRL_PAUSE = "CTRL 8";
+    static final String CTRL_RESUME = "CTRL 9";
 # Tipo 2 Mensajes
 ## Formato: Msg [numero secuencia] [palabra]
