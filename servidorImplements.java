@@ -37,6 +37,7 @@ public class servidorImplements implements servidorInterfaz{
     
     public servidorImplements() throws RemoteException {}
     // ── Punto de entrada ────────────────────────────────────────────────────
+    @Override
     public void run() throws RemoteException {
         try {
             in  = new DataInputStream(socket.getInputStream());
@@ -200,51 +201,6 @@ public class servidorImplements implements servidorInterfaz{
         }
 
         return continuar;
-    }
-
-    // ── Modo lento activado por timeout ─────────────────────────────────────
-    private boolean activarModoLentoDesdeServidor() throws IOException {
-        System.out.println("[Servidor] Timeout de ACK. Enviando CTRL 5 al cliente.");
-        out.writeUTF(servidor.CTRL_SLOW);
-
-        long    deadline  = System.currentTimeMillis() + servidor.ACK_TIMEOUT_MS * 2L;
-        boolean aceptado  = false;
-        boolean continuar = true;
-
-        while (conectado && continuar && !aceptado) {
-            long restante = deadline - System.currentTimeMillis();
-            if (restante <= 0) {
-                System.out.println("[Servidor] Sin respuesta al CTRL 5. Cerrando.");
-                conectado = false;
-                continuar = false;
-            } else {
-                String resp = poll(restante);
-                if (resp == null) {
-                    System.out.println("[Servidor] Sin respuesta al CTRL 5. Cerrando.");
-                    conectado = false;
-                    continuar = false;
-                } else if (servidor.CTRL_SLOW_ACCEPT.equals(resp)) {
-                    modoLento = true;
-                    System.out.println("[Servidor] Cliente acepta modo lento. Retardo: "
-                            + servidor.RETARDO_LENTO_MS + " ms/palabra.");
-                    out.writeUTF(servidor.CTRL_SLOW_ACCEPT);
-                    aceptado = true;
-                } else {
-                    continuar = procesarControl(resp);
-                }
-            }
-        }
-
-        return aceptado && continuar;
-    }
-
-    // ── Toggle de modo lento por solicitud del cliente ───────────────────────
-    private boolean toggleModoLento() throws IOException {
-        modoLento = !modoLento;
-        System.out.println("[Servidor] Modo lento por solicitud del cliente: "
-                + (modoLento ? "ON (" + servidor.RETARDO_LENTO_MS + " ms/palabra)" : "OFF"));
-        out.writeUTF(servidor.CTRL_SLOW_ACCEPT);
-        return true;
     }
 
     // ── Poll con timeout sin propagar InterruptedException en cada llamada ───

@@ -13,7 +13,7 @@ import java.rmi.RemoteException;
  */
 public interface servidorInterfaz extends Remote {
     
-// ── Punto de entrada ────────────────────────────────────────────────────
+    // ── Punto de entrada ────────────────────────────────────────────────────
     public void run() throws RemoteException;
 
     // ── Hilo lector ─────────────────────────────────────────────────────────
