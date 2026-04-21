@@ -17,20 +17,19 @@
 ### Formato: CTRL [codigo]
 - 0: enviar ID
 	- CTRL 0 Quijote
-- 1: 
 - 2: Accepted ID
-	- CTRL 1
-- 3: Denied ID
 	- CTRL 2
+- 3: Denied ID
+	- CTRL 3
 - 4: ACK (cada 20 msgs por ejemplo, configurable)
 	- CTRL 4
-- 5: detecto cliente lento (su buffer está lleno)
-	- CTRL 5
 - 6: Solicito CLOSED
 	- CTRL 6
 - 7: Closed accepted
 	- CTRL 7
+- 8: Pausa
+	- CTRL 8
+- 9: Reanudar
+	- CTRL 9
 # Tipo 2 Mensajes
 ## Formato: Msg [numero secuencia] [palabra]
-- 0: Mensaje
-	- Msg 
