@@ -1,54 +1,83 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ * Carmen Segura Ruiz 
+ Ismael Ropero Ramirez
  */
-package com.mycompany.pr2_dar;
+package com.mycompany.protocolo_practica2;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.rmi.RemoteException;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- *
- * @author inferken
+ * Servidor de streaming continuo con control de flujo y gestión de clientes
+ * lentos.
  */
 public class servidorImplements implements servidorInterfaz{
-    
-    static final String CTRL_ENVIAR_ID = "CTRL 0";
-    static final String CTRL_OK = "CTRL 2"; //acepted ID 
-    static final String CTRL_ID_MAL = "CTRL 3"; 
-    static final String CTRL_ACK = "CTRL 4"; 
-    static final String CTRL_CLOSE_CLI = "CTRL 6"; 
-    static final String CTRL_CLOSE_SRV = "CTRL 7"; // CLOSE ACEPTADOR POR EL SERVIDOR 
-    static final String CTRL_PAUSE = "CTRL 8"; 
-    static final String CTRL_RESUME = "CTRL 9";
-    
-    private volatile boolean conectado = true;
-    private volatile boolean pausado   = false;
 
+    static final String CTRL_OK = "CTRL 2"; // acepted ID
+    static final String CTRL_ID_MAL = "CTRL 3"; // MAL AUTENTICADO
+    static final String CTRL_ACK = "CTRL 4";
+    static final String CTRL_CLOSE_CLI = "CTRL 6";
+    static final String CTRL_CLOSE_SRV = "CTRL 7"; // CLOSE ACEPTADOR POR EL SERVIDOR
+    static final String CTRL_PAUSE = "CTRL 8";
+    static final String CTRL_RESUME = "CTRL 9";
+
+    static final int PALABRAS_POR_BLOQUE = 20;
+    static final int ACK_TIMEOUT_MS = 4000;
+    static final int RETARDO_LENTO_MS = 200;
+
+    static final AtomicInteger contadorClientes = new AtomicInteger(0);
+
+    static final String TEXTO
+            = "En un lugar de la Mancha de cuyo nombre no quiero acordarme no ha mucho tiempo que vivía "
+            + "un hidalgo de los de lanza en astillero adarga antigua rocín flaco y galgo corredor "
+            + "Una olla de algo más vaca que carnero salpicón las más noches duelos y quebrantos los sábados "
+            + "lantejas los viernes algún palomino de añadidura los domingos consumían las tres partes de su hacienda "
+            + "El resto della concluían sayo de velarte calzas de velludo para las fiestas con sus pantuflos de lo mesmo "
+            + "y los días de entresemana se honraba con su vellorí de lo más fino "
+            + "Tenía en su casa una ama que pasaba de los cuarenta y una sobrina que no llegaba a los veinte "
+            + "y un mozo de campo y plaza que así ensillaba el rocín como tomaba la podadera "
+            + "Frisaba la edad de nuestro hidalgo con los cincuenta años era de complexión recia seco de carnes "
+            + "enjuto de rostro gran madrugador y amigo de la caza";
     
-    private final Socket            socket;
-    private final int               numCliente;
-    private DataInputStream         in;
-    private DataOutputStream        out;
-    
-    public servidorImplements() throws RemoteException {}
+
+// ════════════════════════════════════════════════════════════════════════════
+class ManejadorCliente implements Runnable {
+
+    private final Socket socket;
+    private final int numCliente;
+    private DataInputStream in;
+    private DataOutputStream out;
+
+    private final BlockingQueue<String> colaEntrada = new ArrayBlockingQueue<>(64);
+
+    private volatile boolean conectado = true;
+    private volatile boolean pausado = false;
+    private volatile boolean modoLento = false;
+
+    ManejadorCliente(Socket socket, int numCliente) {
+        this.socket = socket;
+        this.numCliente = numCliente;
+    }
+
     // ── Punto de entrada ────────────────────────────────────────────────────
     @Override
-    public void run() throws RemoteException {
+    public void run() {
         try {
-            in  = new DataInputStream(socket.getInputStream());
+            in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
 
-            String   raw    = in.readUTF();
+            String raw = in.readUTF();
             String[] partes = raw.split(" ", 3);
-            boolean  altaOk = partes.length == 3
-                           && "CTRL".equals(partes[0])
-                           && "0".equals(partes[1])
-                           && "Jefe".equals(partes[2]);
+            boolean altaOk = partes.length == 3
+                    && "CTRL".equals(partes[0])
+                    && "0".equals(partes[1])
+                    && "Jefe".equals(partes[2]);
 
             if (altaOk) {
                 System.out.println("[Servidor] ID recibida: " + partes[2]);
@@ -62,14 +91,19 @@ public class servidorImplements implements servidorInterfaz{
                 enviarFlujo();
             } else {
                 System.out.println("[Servidor] Alta incorrecta: " + raw);
-                out.writeUTF(servidorImplements.CTRL_ID_KO);
+                out.writeUTF(servidorImplements.CTRL_ID_MAL); // MAL AUTENTICADO
             }
 
         } catch (IOException ex) {
-            if (conectado) System.err.println("[Servidor] Error con cliente: " + ex.getMessage());
+            if (conectado) {
+                System.err.println("[Servidor] Error con cliente: " + ex.getMessage());
+            }
         } finally {
             conectado = false;
-            try { socket.close(); } catch (IOException ignored) {}
+            try {
+                socket.close();
+            } catch (IOException ignored) {
+            }
             System.out.println("[Servidor] Socket cerrado.");
         }
     }
@@ -82,24 +116,29 @@ public class servidorImplements implements servidorInterfaz{
                 colaEntrada.put(msg);
             }
         } catch (IOException ex) {
-            if (conectado) System.err.println("[Servidor] Hilo lector: " + ex.getMessage());
+            if (conectado) {
+                System.err.println("[Servidor] Hilo lector: " + ex.getMessage());
+            }
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
         } finally {
-            try { colaEntrada.put(servidor.CTRL_CLOSE_CLI); } catch (InterruptedException ignored) {}
+            try {
+                colaEntrada.put(servidorImplements.CTRL_CLOSE_CLI);
+            } catch (InterruptedException ignored) {
+            }
         }
     }
 
     // ── Hilo emisor ─────────────────────────────────────────────────────────
     private void enviarFlujo() throws IOException {
-        String[] palabras  = servidor.TEXTO.split(" ");
-        int      total     = palabras.length;
-        int      seq       = 0;
-        boolean  continuar = true;
+        String[] palabras = servidorImplements.TEXTO.split(" ");
+        int total = palabras.length;
+        int seq = 0;
+        boolean continuar = true;
 
         while (conectado && continuar) {
 
-            for (int j = 0; j < servidor.PALABRAS_POR_BLOQUE && conectado && continuar; j++) {
+            for (int j = 0; j < servidorImplements.PALABRAS_POR_BLOQUE && conectado && continuar; j++) {
 
                 // Esperar mientras esté pausado
                 while (pausado && conectado && continuar) {
@@ -117,7 +156,7 @@ public class servidorImplements implements servidorInterfaz{
 
                     // Retardo modo lento: poll corto para atender controles durante la espera
                     if (modoLento) {
-                        long fin = System.currentTimeMillis() + servidor.RETARDO_LENTO_MS;
+                        long fin = System.currentTimeMillis() + servidorImplements.RETARDO_LENTO_MS;
                         while (conectado && continuar && !pausado
                                 && System.currentTimeMillis() < fin) {
                             long resta = fin - System.currentTimeMillis();
@@ -136,34 +175,29 @@ public class servidorImplements implements servidorInterfaz{
         }
 
         if (conectado) {
-            out.writeUTF(servidor.CTRL_CLOSE_SRV);
+            out.writeUTF(servidorImplements.CTRL_CLOSE_SRV);
             System.out.println("[Servidor] Fin de stream (CTRL 7) enviado.");
         }
     }
 
     // ── Esperar ACK con timeout ──────────────────────────────────────────────
     private boolean esperarACK() throws IOException {
-        long    deadline  = System.currentTimeMillis() + servidor.ACK_TIMEOUT_MS;
-        boolean ackOk     = false;
+        long deadline = System.currentTimeMillis() + servidorImplements.ACK_TIMEOUT_MS;
+        boolean ackOk = false;
         boolean continuar = true;
 
         while (conectado && continuar && !ackOk) {
             long restante = deadline - System.currentTimeMillis();
-            if (restante <= 0) {
-                continuar = activarModoLentoDesdeServidor();
-                ackOk     = continuar;
-            } else {
+            if (restante >= 0) {
+                ackOk = continuar;
                 String msg = poll(restante);
-                if (msg == null) {
-                    continuar = activarModoLentoDesdeServidor();
-                    ackOk     = continuar;
-                } else if (servidor.CTRL_ACK.equals(msg)) {
+                if (servidorImplements.CTRL_ACK.equals(msg)) {
                     System.out.println("[Servidor] ACK recibido.");
                     ackOk = true;
                 } else {
                     continuar = procesarControl(msg);
                     if (pausado) {
-                        deadline = System.currentTimeMillis() + servidor.ACK_TIMEOUT_MS;
+                        deadline = System.currentTimeMillis() + servidorImplements.ACK_TIMEOUT_MS;
                     }
                 }
             }
@@ -176,23 +210,20 @@ public class servidorImplements implements servidorInterfaz{
     private boolean procesarControl(String msg) throws IOException {
         boolean continuar = true;
 
-        if (servidor.CTRL_ACK.equals(msg)) {
+        if (servidorImplements.CTRL_ACK.equals(msg)) {
             System.out.println("[Servidor] ACK (fuera de ventana) recibido.");
 
-        } else if (servidor.CTRL_SLOW.equals(msg)) {
-            continuar = toggleModoLento();
-
-        } else if (servidor.CTRL_PAUSE.equals(msg)) {
+        } else if (servidorImplements.CTRL_PAUSE.equals(msg)) {
             System.out.println("[Servidor] Pausa recibida.");
             pausado = true;
 
-        } else if (servidor.CTRL_RESUME.equals(msg)) {
+        } else if (servidorImplements.CTRL_RESUME.equals(msg)) {
             System.out.println("[Servidor] Reanudación recibida.");
             pausado = false;
 
-        } else if (servidor.CTRL_CLOSE_CLI.equals(msg)) {
+        } else if (servidorImplements.CTRL_CLOSE_CLI.equals(msg)) {
             System.out.println("[Servidor] Cierre solicitado por cliente. Enviando CTRL 7.");
-            out.writeUTF(servidor.CTRL_CLOSE_SRV);
+            out.writeUTF(servidorImplements.CTRL_CLOSE_SRV);
             conectado = false;
             continuar = false;
 
@@ -213,4 +244,5 @@ public class servidorImplements implements servidorInterfaz{
         }
         return result;
     }
+}
 }
