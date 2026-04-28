@@ -117,7 +117,7 @@ public class cliente {
         }
     }
 
-    // ── Procesar señales de control del servidor ─────────────────────────────
+ // ── Procesar señales de control del servidor ─────────────────────────────
     private static boolean procesarControlServidor(String msg, DataInputStream in, DataOutputStream out)
             throws IOException {
         boolean continuar = true;
@@ -198,4 +198,5 @@ public class cliente {
         }
     }
 }
-}
+
+
