@@ -4,19 +4,17 @@
  */
 package com.mycompany.protocolo_practica2;
 
-import java.io.IOException;
 import java.rmi.Remote;
+import java.rmi.RemoteException;
 
 /**
  *
  * @author User
  */
-public interface servidorInterfaz extends Remote{
-    
-    public String enviarFlujo() throws RemoteException;
-    public boolean esperarACK() throws RemoteException ; 
-    public boolean procesarControl(String msg) throws RemoteException ;
-    public String poll(long ms)throws RemoteException ;
-    public boolean auth(Stream auth) throws RemoteException;
-    
+public interface servidorInterfaz extends Remote {
+
+    public String NextF() throws RemoteException;
+
+    public boolean authe(String auth) throws RemoteException;
+
 }

@@ -5,7 +5,12 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.net.Socket;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+import java.util.Scanner;
 
 /**
  * Cliente de streaming continuo.
@@ -37,118 +42,41 @@ public class cliente {
 
     private static volatile DataOutputStream outGlobal = null;
 
-    public static void main(String[] args) {
-        try (Socket socket = new Socket(IP_SERVER, PUERTO)) {
+    public static void main(String[] args) throws Object {
 
-            DataInputStream in = new DataInputStream(socket.getInputStream());
-            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-            outGlobal = out;
+        @SuppressWarnings("CallToPrintStackTrace")
+        Scanner lecturaTeclado = new Scanner(System.in);
 
-            out.writeUTF(CTRL_ID + " " + "Jefe");
+        try {
+            String registroURL = "rmi://localhost:1099/server";
+            //utiliza Naming.lookup para obtener una referencia al objeto remoto registrado previamente en el servidor
+            // la referencia es un stub.
+            servidorInterfaz stub = (servidorInterfaz) Naming.lookup(registroURL);
+            //invocar ahora los métodos remotos
 
-            String confirmacion = in.readUTF();
-
-            if (CTRL_OK.equals(confirmacion)) {
-                System.out.println("Sesión iniciada. Comandos: 'p'=pausa  's'=modo lento  'q'=salir");
-                System.out.flush();
-
-                Thread hiloTeclado = new Thread(cliente::leerTeclado, "teclado");
-                hiloTeclado.setDaemon(true);
-                hiloTeclado.start();
-
-                recibirFlujo(in, out);
-
-            } else if (CTRL_ID_KO.equals(confirmacion)) {
-                System.out.println("ID rechazada por el servidor.\n");
-                System.out.flush();
-            } else {
-                System.out.println(" Respuesta desconocida: \n[" + confirmacion + "]");
-                System.out.flush();
-            }
-
-        } catch (IOException ex) {
-            if (!terminado) {
-                System.out.println("Error de red: " + ex.getMessage());
-                System.out.flush();
-            }
-        }
-        System.out.println("\n Desconectado");
-        System.out.flush();
-    }
-
-    // ── Bucle de recepción ───────────────────────────────────────────────────
-    private static void recibirFlujo(DataInputStream in, DataOutputStream out) throws IOException {
-        int contadorBloque = 0;
-
-        while (!terminado) {
-            String mensaje;
-            try {
-                mensaje = in.readUTF();
-            } catch (IOException ex) {
-                if (!terminado) {
-                    throw ex;
-                }
-                mensaje = null;
-            }
-
-            if (mensaje != null) {
-                if (mensaje.startsWith("CTRL")) {
-                    boolean continuar = procesarControlServidor(mensaje, in, out);
-                    terminado = terminado || !continuar;
-
-                } else if (mensaje.startsWith("Msg")) {
-                    String[] partes = mensaje.split(" ", 3);
-                    if (partes.length < 3) {
-                        System.out.println(" \n Malformado: " + mensaje);
-                        System.out.flush();
-                    } else {
-                        System.out.println("[Cliente] #" + partes[1] + " -> " + partes[2]);
-                        contadorBloque++;
-                        if (contadorBloque >= PALABRAS_POR_BLOQUE) {
-                            out.writeUTF(CTRL_ACK);
-                            contadorBloque = 0;
-                        }
-                    }
-                } else {
-                    System.out.println("\n[" + mensaje + "]");
-                    System.out.flush();
-                }
-            }
-        }
-    }
-
- // ── Procesar señales de control del servidor ─────────────────────────────
-    private static boolean procesarControlServidor(String msg, DataInputStream in, DataOutputStream out)
-            throws IOException {
-        boolean continuar = true;
-
-        if (CTRL_CLOSE_SRV.equals(msg)) {
-            System.out.println("\n Fin de stream");
-        System.out.flush();
-            terminado = true;
-            continuar = false;
-
-        } else if (CTRL_SLOW.equals(msg)) {
-            out.writeUTF(CTRL_SLOW_ACCEPT);
-            String confirm = in.readUTF();
-            if (CTRL_SLOW_ACCEPT.equals(confirm)) {
-                System.out.println("\n Modo lento activado por el servidor");
-        System.out.flush();
-            } else {
-                System.out.println("Respuesta inesperada tras aviso lento: " + confirm);
-        System.out.flush();
-            }
-
-        } else if (CTRL_SLOW_ACCEPT.equals(msg)) {
-            System.out.println("Modo lento confirmado por el servidor");
-        System.out.flush();
-
-        } else {
-            System.out.println("\n Control desconocido del servidor: " + msg);
-        System.out.flush();
+            // AUTENTICACION------------------------------------------------
+            String auth;
+            boolean verificado;
+            do {
+                System.out.println("Introduzca su usuario: ");
+                auth = lecturaTeclado.nextLine();
+                verificado = stub.authe(auth);
+            } while (verificado == false);
+            
+            // RECIBIR FLUJO------------------------------------------------------------
+           int seq= 0;
+            do {
+                System.out.println(stub.NextF(seq));
+                seq++;
+                
+            } while (////excepciones); 
+ 
+            
+         
+        } catch (RemoteException | MalformedURLException | NotBoundException e) {
+            e.printStackTrace();
         }
 
-        return continuar;
     }
 
     // ── Hilo de teclado ──────────────────────────────────────────────────────
@@ -164,7 +92,7 @@ public class cliente {
         } catch (IOException ex) {
             if (!terminado) {
                 System.out.println("Error teclado: " + ex.getMessage());
-        System.out.flush();
+                System.out.flush();
             }
         }
     }
@@ -176,27 +104,25 @@ public class cliente {
                 pausado = true;
                 outGlobal.writeUTF(CTRL_PAUSE);
                 System.out.println("Stream PAUSADO  (escribe 'p' para reanudar)");
-        System.out.flush();
+                System.out.flush();
             } else {
                 pausado = false;
                 outGlobal.writeUTF(CTRL_RESUME);
-                 System.out.println("Stream REANUDADO");
-        System.out.flush();
+                System.out.println("Stream REANUDADO");
+                System.out.flush();
             }
         } else if ("s".equals(linea)) {
             outGlobal.writeUTF(CTRL_SLOW);
-             System.out.println("Solicitud modo lento enviada");
-        System.out.flush();
+            System.out.println("Solicitud modo lento enviada");
+            System.out.flush();
         } else if ("q".equals(linea)) {
             terminado = true;
             outGlobal.writeUTF(CTRL_CLOSE_CLI);
-             System.out.println("Cerrando...");
-        System.out.flush();
+            System.out.println("Cerrando...");
+            System.out.flush();
         } else {
-             System.out.println("Comando desconocido. Usa 'p', 's' o 'q'");
-        System.out.flush();
+            System.out.println("Comando desconocido. Usa 'p', 's' o 'q'");
+            System.out.flush();
         }
     }
 }
-
-

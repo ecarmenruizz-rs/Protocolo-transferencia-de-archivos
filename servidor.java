@@ -1,8 +1,6 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- */
 
-package com.mycompany.pr2_dar;
+package com.mycompany.protocolo_practica2;
+
 
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -11,11 +9,12 @@ import java.rmi.server.UnicastRemoteObject;
 
 /**
  *
- * @author inferken
+ * @author User
  */
 public class servidor {
-
-    @SuppressWarnings("CallToPrintStackTrace")
+    
+   @SuppressWarnings("CallToPrintStackTrace")
+   
     public static void main(String[] args) {
         try{
             Registry registry = LocateRegistry.createRegistry(1099);
