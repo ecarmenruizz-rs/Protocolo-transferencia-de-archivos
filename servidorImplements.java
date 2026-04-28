@@ -31,8 +31,6 @@ public class servidorImplements implements servidorInterfaz{
     static final int ACK_TIMEOUT_MS = 4000;
     static final int RETARDO_LENTO_MS = 200;
 
-    static final AtomicInteger contadorClientes = new AtomicInteger(0);
-
     static final String TEXTO
             = "En un lugar de la Mancha de cuyo nombre no quiero acordarme no ha mucho tiempo que vivía "
             + "un hidalgo de los de lanza en astillero adarga antigua rocín flaco y galgo corredor "
@@ -44,91 +42,7 @@ public class servidorImplements implements servidorInterfaz{
             + "y un mozo de campo y plaza que así ensillaba el rocín como tomaba la podadera "
             + "Frisaba la edad de nuestro hidalgo con los cincuenta años era de complexión recia seco de carnes "
             + "enjuto de rostro gran madrugador y amigo de la caza";
-    
-
-// ════════════════════════════════════════════════════════════════════════════
-class ManejadorCliente implements Runnable {
-
-    private final Socket socket;
-    private final int numCliente;
-    private DataInputStream in;
-    private DataOutputStream out;
-
-    private final BlockingQueue<String> colaEntrada = new ArrayBlockingQueue<>(64);
-
-    private volatile boolean conectado = true;
-    private volatile boolean pausado = false;
-    private volatile boolean modoLento = false;
-
-    ManejadorCliente(Socket socket, int numCliente) {
-        this.socket = socket;
-        this.numCliente = numCliente;
-    }
-
-    // ── Punto de entrada ────────────────────────────────────────────────────
-    @Override
-    public void run() {
-        try {
-            in = new DataInputStream(socket.getInputStream());
-            out = new DataOutputStream(socket.getOutputStream());
-
-            String raw = in.readUTF();
-            String[] partes = raw.split(" ", 3);
-            boolean altaOk = partes.length == 3
-                    && "CTRL".equals(partes[0])
-                    && "0".equals(partes[1])
-                    && "Jefe".equals(partes[2]);
-
-            if (altaOk) {
-                System.out.println("[Servidor] ID recibida: " + partes[2]);
-                out.writeUTF(servidorImplements.CTRL_OK);
-                System.out.println("[Servidor] Sesión aceptada. Iniciando stream.");
-
-                Thread lector = new Thread(this::hiloLector, "lector-cliente");
-                lector.setDaemon(true);
-                lector.start();
-
-                enviarFlujo();
-            } else {
-                System.out.println("[Servidor] Alta incorrecta: " + raw);
-                out.writeUTF(servidorImplements.CTRL_ID_MAL); // MAL AUTENTICADO
-            }
-
-        } catch (IOException ex) {
-            if (conectado) {
-                System.err.println("[Servidor] Error con cliente: " + ex.getMessage());
-            }
-        } finally {
-            conectado = false;
-            try {
-                socket.close();
-            } catch (IOException ignored) {
-            }
-            System.out.println("[Servidor] Socket cerrado.");
-        }
-    }
-
-    // ── Hilo lector ─────────────────────────────────────────────────────────
-    private void hiloLector() {
-        try {
-            while (conectado) {
-                String msg = in.readUTF();
-                colaEntrada.put(msg);
-            }
-        } catch (IOException ex) {
-            if (conectado) {
-                System.err.println("[Servidor] Hilo lector: " + ex.getMessage());
-            }
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-        } finally {
-            try {
-                colaEntrada.put(servidorImplements.CTRL_CLOSE_CLI);
-            } catch (InterruptedException ignored) {
-            }
-        }
-    }
-
+ 
     // ── Hilo emisor ─────────────────────────────────────────────────────────
     private void recibirFlujo() throws IOException {
         String[] palabras = servidorImplements.TEXTO.split(" ");
@@ -244,5 +158,4 @@ class ManejadorCliente implements Runnable {
         }
         return result;
     }
-}
 }
