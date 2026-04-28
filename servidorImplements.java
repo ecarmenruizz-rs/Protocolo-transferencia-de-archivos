@@ -158,4 +158,13 @@ public class servidorImplements implements servidorInterfaz{
         }
         return result;
     }
+
+ public boolean auth(String mensaje){
+        boolean autenticado = false;
+        
+        if(mensaje.equals("jefe")){
+        autenticado = true;
+    }
+        return autenticado;
+    }
 }
