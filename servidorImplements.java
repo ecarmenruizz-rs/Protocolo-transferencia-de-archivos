@@ -130,7 +130,7 @@ class ManejadorCliente implements Runnable {
     }
 
     // ── Hilo emisor ─────────────────────────────────────────────────────────
-    private void enviarFlujo() throws IOException {
+    private void recibirFlujo() throws IOException {
         String[] palabras = servidorImplements.TEXTO.split(" ");
         int total = palabras.length;
         int seq = 0;
