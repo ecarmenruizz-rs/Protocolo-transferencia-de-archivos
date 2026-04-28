@@ -13,7 +13,7 @@ import java.rmi.Remote;
  */
 public interface servidorInterfaz extends Remote{
     
-    public void enviarFlujo() throws RemoteException;
+    public String enviarFlujo() throws RemoteException;
     public boolean esperarACK() throws RemoteException ; 
     public boolean procesarControl(String msg) throws RemoteException ;
     public String poll(long ms)throws RemoteException ;
