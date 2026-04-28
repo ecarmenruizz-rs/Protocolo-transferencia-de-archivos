@@ -13,11 +13,10 @@ import java.rmi.Remote;
  */
 public interface servidorInterfaz extends Remote{
     
-    public void run()throws IOException ; 
-    public void hiloLector() throws IOException; 
-    public void enviarFlujo() throws IOException;
-    public boolean esperarACK() throws IOException ; 
-    public boolean procesarControl(String msg) throws IOException ;
-    public String poll(long ms)throws IOException ;
+    public void enviarFlujo() throws RemoteException;
+    public boolean esperarACK() throws RemoteException ; 
+    public boolean procesarControl(String msg) throws RemoteException ;
+    public String poll(long ms)throws RemoteException ;
+    public boolean auth(Stream auth) throws RemoteException;
     
 }
