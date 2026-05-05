@@ -26,17 +26,6 @@ public class cliente {
     static final int PUERTO = 5555;
     static final int PALABRAS_POR_BLOQUE = 20;
 
-    static final String CTRL_ID = "CTRL 0";
-    static final String CTRL_OK = "CTRL 2";
-    static final String CTRL_ID_KO = "CTRL 3";
-    static final String CTRL_ACK = "CTRL 4";
-    static final String CTRL_SLOW = "CTRL 5";
-    static final String CTRL_CLOSE_CLI = "CTRL 6";
-    static final String CTRL_CLOSE_SRV = "CTRL 7";
-    static final String CTRL_SLOW_ACCEPT = "CTRL 1";
-    static final String CTRL_PAUSE = "CTRL 8";
-    static final String CTRL_RESUME = "CTRL 9";
-
     private static volatile boolean pausado = false;
     private static volatile boolean terminado = false;
 
@@ -66,7 +55,7 @@ public class cliente {
             // RECIBIR FLUJO------------------------------------------------------------
            int seq= 0;
             do {
-                System.out.println(stub.NextF(seq));
+                System.out.println(stub.NextWord(seq));
                 seq++;
                 
             } while (////excepciones); 
