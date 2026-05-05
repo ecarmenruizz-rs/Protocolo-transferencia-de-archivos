@@ -69,19 +69,62 @@ public class cliente {
                         
                         // Pequeña pausa para simular streaming
                         Thread.sleep(500); 
-                    } catch (RemoteException e) {
-                        System.err.println("Error de conexión. Reintentando secuencia " + seq + "...");
-                        Thread.sleep(2000); // Esperar antes de reintentar
+                    } catch (ConnectException e) {
+                    // El servidor está caído o no responde → reintentar la misma seq
+                    System.err.println("[RECONEXIÓN] Servidor no disponible (seq=" + seq
+                            + "). Reintentando en 2 s... (" + e.getMessage() + ")");
+                    try { Thread.sleep(2000); } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
                     }
-                } else {
+                    // seq NO se incrementa → pedirá la misma palabra al reconectar
+
+                } catch (ConnectIOException e) {
+                    // Fallo de E/S en la conexión (red inestable) → reintentar
+                    System.err.println("[RED] Error de E/S en conexión (seq=" + seq
+                            + "). Reintentando en 1 s... (" + e.getMessage() + ")");
+                    try { Thread.sleep(1000); } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                    }
+                    // seq NO se incrementa
+
+                } catch (MarshalException e) {
+                    // Error al serializar la llamada (parámetros incorrectos) → saltar palabra
+                    System.err.println("[MARSHAL] Error serializando la petición seq=" + seq
+                            + ". Saltando palabra. (" + e.getMessage() + ")");
+                    seq++; // el problema es la petición, no la red; avanzamos
+
+                } catch (UnmarshalException e) {
+                    // Error al deserializar la respuesta → reintentar la misma seq
+                    System.err.println("[UNMARSHAL] Respuesta corrupta para seq=" + seq
+                            + ". Reintentando... (" + e.getMessage() + ")");
+                    try { Thread.sleep(500); } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                    }
+                    // seq NO se incrementa
+
+                } catch (RemoteException e) {
+                    // Cualquier otro error RMI genérico → reintentar con espera
+                    System.err.println("[RMI] RemoteException en seq=" + seq
+                            + ". Reintentando en 1 s... (" + e.getMessage() + ")");
+                    try { Thread.sleep(1000); } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                    }
+                    // seq NO se incrementa
+                }else {
                     // Si está pausado, esperamos un poco antes de volver a comprobar
                     Thread.sleep(200);
                 }
             }
             System.out.println("Streaming finalizado por el usuario.");
  
-        } catch (RemoteException | MalformedURLException | NotBoundException e) {
-            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            System.err.println("[FATAL] URL del registro RMI malformada: " + e.getMessage());
+        } catch (NotBoundException e) {
+            System.err.println("[FATAL] Nombre no registrado en el servidor RMI: " + e.getMessage());
+        } catch (RemoteException e) {
+            System.err.println("[FATAL] No se pudo contactar con el registro RMI: " + e.getMessage());
+        } finally {
+            lecturaTeclado.close();
         }
 
     }
