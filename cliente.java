@@ -1,7 +1,6 @@
 package com.mycompany.protocolo_practica2;
 
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
@@ -18,13 +17,14 @@ import java.util.Scanner;
  * ordenado
  *
  */
+
 public class cliente {
 
     
     static boolean pausado = false;
     static boolean terminado = false;
 
-    public static void main(String[] args){
+    public static void main(String[] args) throws InterruptedException{
 
         @SuppressWarnings("CallToPrintStackTrace")
         Scanner lecturaTeclado = new Scanner(System.in);
@@ -43,16 +43,42 @@ public class cliente {
                 System.out.println("Introduzca su usuario: ");
                 auth = lecturaTeclado.nextLine();
                 verificado = stub.authe(auth);
+                if (!verificado) System.out.println("Usuario incorrecto.");
             } while (verificado == false);
+            
+            System.out.println("Autenticación exitosa. Iniciando stream...");
+            System.out.println("Comandos: [p] Pausa/Reanuda | [q] Salir");
+            
+            // --- INICIAR HILO DE TECLADO ---
+            // para que el programa escuche teclas mientras recibe datos
+            Thread hiloControl = new Thread(() -> leerTeclado());
+            hiloControl.setDaemon(true); // Se cierra al cerrar el principal
+            hiloControl.start();
+            
             
             // RECIBIR FLUJO------------------------------------------------------------
             // queremos que cuando haya una excepcion pida la palabra anterior 
-            static int seq= 0;
-            do {
-                System.out.println(stub.NextWord(seq));
-                seq++;
-                
-            } while (//excepciones); 
+            int seq= 0;
+            while (!terminado){
+                if (!pausado) {
+                    try {
+                        // Llamada al método remoto con el número de secuencia
+                        String palabra = stub.NextWord(seq);
+                        System.out.println(palabra);
+                        seq++;
+                        
+                        // Pequeña pausa para simular streaming
+                        Thread.sleep(500); 
+                    } catch (RemoteException e) {
+                        System.err.println("Error de conexión. Reintentando secuencia " + seq + "...");
+                        Thread.sleep(2000); // Esperar antes de reintentar
+                    }
+                } else {
+                    // Si está pausado, esperamos un poco antes de volver a comprobar
+                    Thread.sleep(200);
+                }
+            }
+            System.out.println("Streaming finalizado por el usuario.");
  
         } catch (RemoteException | MalformedURLException | NotBoundException e) {
             e.printStackTrace();
@@ -66,7 +92,7 @@ public class cliente {
         try {
             while (!terminado) {
                 String linea = teclado.readLine();
-                if (linea != null && outGlobal != null) {
+                if (linea != null) {
                     procesarComando(linea.trim().toLowerCase());
                 }
             }
