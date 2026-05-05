@@ -6,7 +6,7 @@ El protocolo ópera sobre TCP y utiliza una arquitectura de mensajes estructurad
 
 2.  Arquitectura del sistema general:
 El sistema sigue un modelo multi hilo con desacoplamiento de entrada y salida.
--	El servidor escucha con RMI en el puerto RMI y delega cada conexión a un ManejadorCliente independiente.
+-	El servidor escucha con RMI en el puerto RMI (1099) y delega cada conexión a un ManejadorCliente independiente.
 -	ManejadorCliente: 
 Hilo Lector: Monitorea constantemente el socket para capturar comandos de control (pausa, modo lento) y los deposita en una ArrayBlockingQueue.
 Hilo Emisor: Consume la cola de control y gestiona el envío del texto proactivo, respetando los estados de pausa y los retardos del modo lento.
@@ -14,7 +14,7 @@ Hilo Emisor: Consume la cola de control y gestiona el envío del texto proactivo
 
 3. Requisitos de ejecución:
 - Java Runtime Enviroment (JRE): versión 8  superior.
-- Conectividad: Acceso al puerto <z ( se puede configurar en el código).
+- Conectividad: Acceso al puerto 1099 ( se puede configurar en el código).
 
 4. Instrucciones de lanzamiento 
 Compilación, desde la raíz del proyecto o la carpeta de fuentes:
@@ -26,6 +26,6 @@ Ejecución del cliente; en un terminal distinto (puede ser otra máquina que tie
 Java cliente
 
 5.Ejemplos de uso (interfaz cliente)
-Una vez que se inició la sesión con el ID “Jefe”, el cliente puede interactuar con los siguientes comandos por teclado:
+Una vez que se inició la sesión con el ID “jefe”, el cliente puede interactuar con los siguientes comandos por teclado:
 -	p (pausa): detiene la recepción de datos. El servidor entra en un estado de espera hasta que se envíe una p nuevamente para reanudar el envío de datos.
 -	q (quit) :Finaliza la conexión de forma segura, informando al servidor para que libere los recursos del hilo.
