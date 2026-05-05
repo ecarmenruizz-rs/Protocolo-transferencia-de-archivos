@@ -14,7 +14,7 @@ Hilo Emisor: Consume la cola de control y gestiona el envío del texto proactivo
 
 3. Requisitos de ejecución:
 - Java Runtime Enviroment (JRE): versión 8  superior.
-- Conectividad: Acceso al puerto 5555 ( se puede configurar en el código).
+- Conectividad: Acceso al puerto <z ( se puede configurar en el código).
 
 4. Instrucciones de lanzamiento 
 Compilación, desde la raíz del proyecto o la carpeta de fuentes:
@@ -22,7 +22,6 @@ Javac servidor,java
 Javac cliente.java
 ejecución del servidor
 java servidor
-el servidor muestra logs en tiempo real que indican la conexión de clientes y el estado de los ACKs recibidos.
 Ejecución del cliente; en un terminal distinto (puede ser otra máquina que tiene que configurar la IP correcta).
 Java cliente
 
