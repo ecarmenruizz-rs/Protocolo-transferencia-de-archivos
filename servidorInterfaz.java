@@ -13,7 +13,7 @@ import java.rmi.RemoteException;
  */
 public interface servidorInterfaz extends Remote {
 
-    public String NextF() throws RemoteException;
+    public String NextWord() throws RemoteException;
 
     public boolean authe(String auth) throws RemoteException;
 
