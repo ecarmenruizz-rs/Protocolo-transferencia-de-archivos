@@ -1,12 +1,10 @@
 package com.mycompany.protocolo_practica2;
 
 import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
-import java.net.Socket;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -22,12 +20,11 @@ import java.util.Scanner;
  */
 public class cliente {
 
-    static final String IP_SERVER = "127.0.0.1";
-    static final int PUERTO = 5555;
+    
+    static boolean pausado = false;
+    static boolean terminado = false;
 
-    private static volatile DataOutputStream outGlobal = null;
-
-    public static void main(String[] args) throws Object {
+    public static void main(String[] args){
 
         @SuppressWarnings("CallToPrintStackTrace")
         Scanner lecturaTeclado = new Scanner(System.in);
@@ -49,15 +46,14 @@ public class cliente {
             } while (verificado == false);
             
             // RECIBIR FLUJO------------------------------------------------------------
-           int seq= 0;
+            // queremos que cuando haya una excepcion pida la palabra anterior 
+            static int seq= 0;
             do {
                 System.out.println(stub.NextWord(seq));
                 seq++;
                 
-            } while (////excepciones); 
+            } while (//excepciones); 
  
-            
-         
         } catch (RemoteException | MalformedURLException | NotBoundException e) {
             e.printStackTrace();
         }
@@ -87,18 +83,15 @@ public class cliente {
         if ("p".equals(linea)) {
             if (!pausado) {
                 pausado = true;
-                outGlobal.writeUTF(CTRL_PAUSE);
                 System.out.println("Stream PAUSADO  (escribe 'p' para reanudar)");
                 System.out.flush();
             } else {
                 pausado = false;
-                outGlobal.writeUTF(CTRL_RESUME);
                 System.out.println("Stream REANUDADO");
                 System.out.flush();
             }
         } else if ("q".equals(linea)) {
             terminado = true;
-            outGlobal.writeUTF(CTRL_CLOSE_CLI);
             System.out.println("Cerrando...");
             System.out.flush();
         } else {

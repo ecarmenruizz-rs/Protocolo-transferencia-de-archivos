@@ -48,4 +48,9 @@ public class servidorImplements implements servidorInterfaz {
         return autenticado;
     }
 
+    @Override
+    public String NextWord() throws RemoteException {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
 }
