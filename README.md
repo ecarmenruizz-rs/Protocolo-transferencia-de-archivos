@@ -1,22 +1,20 @@
 Protocolo de Streaming continuo con control de flujo (caso 12)
-Este proyecto implementa un protocolo de comunicación a nivel de aplicación diseñado para la distribución de flujos de datos en forma de texto en tiempo real. El sistema garantiza la integridad de la entrega mediante mecanismos explícitos de control de flujo y gestión dinámica de clientes lentos.
+Este proyecto implementa un protocolo de comunicación a nivel de aplicación diseñado para la distribución de flujos de datos en forma de texto en tiempo real. Esta implementación hace uso del concepto de stubs y de programación de protocolos a alto nivel.
 
 1. Descripción del protocolo
-El protocolo ópera sobre TCP y utiliza una arquitectura de mensajes estructurados para gestionar el ciclo de vida de la conexión y el ritmo de transmisión.
+El protocolo opera mediante el uso de stubs y de invocaciones remotas de métodos por parte del cliente. Estos métodos remotos se encuentran en el servidor, definidos en el archivo servidorImplements.java.
 
 2.  Arquitectura del sistema general:
 El sistema sigue un modelo multi hilo con desacoplamiento de entrada y salida.
 -	El servidor escucha con RMI en el puerto RMI (1099) y delega cada conexión a un ManejadorCliente independiente.
--	ManejadorCliente: 
-Hilo Lector: Monitorea constantemente el socket para capturar comandos de control (pausa, modo lento) y los deposita en una ArrayBlockingQueue.
-Hilo Emisor: Consume la cola de control y gestiona el envío del texto proactivo, respetando los estados de pausa y los retardos del modo lento.
 -	Cliente: mantiene un hilo dedicado para la entrada de teclado, permitiendo al usuario interactuar con el flujo sin detener la recepción de datos.
 
 3. Requisitos de ejecución:
 - Java Runtime Enviroment (JRE): versión 8  superior.
 - Conectividad: Acceso al puerto 1099 ( se puede configurar en el código).
 
-4. Instrucciones de lanzamiento 
+4. Instrucciones de lanzamiento
+Es necesario tener 
 Compilación, desde la raíz del proyecto o la carpeta de fuentes:
 Javac servidor,java
 Javac cliente.java
