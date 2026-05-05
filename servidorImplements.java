@@ -30,7 +30,7 @@ public class servidorImplements implements servidorInterfaz {
         
     }
     // ── Hilo emisor ─────────────────────────────────────────────────────────
-    public String NextF(int seq) throws RemoteException {
+    public String NextWord(int seq) throws RemoteException {
 
         String[] palabras = servidorImplements.TEXTO.split(" ");
 
