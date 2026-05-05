@@ -27,11 +27,12 @@ public class servidor {
             // se registra el objeto como stub
             servidorImplements objExportado = (servidorImplements) new servidorImplements();
             // se crea el stub dinamicamente y se asocia al puerto 0
-            servidorImplements stub = (servidorImplements) UnicastRemoteObject.exportObject(objExportado, 0);
+            servidorInterfaz stub = (servidorInterfaz) UnicastRemoteObject.exportObject(objExportado, 0);
             // se registra stub en el servidor RMI
             Registry registry = LocateRegistry.getRegistry(); // Puerto por defecto 1099
             // para registralo o sustituirlo
             registry.rebind("server", stub);
+            System.out.println("Servidor RMI listo.");
         }catch (RemoteException e){
             e.printStackTrace();
             System.exit(0);
