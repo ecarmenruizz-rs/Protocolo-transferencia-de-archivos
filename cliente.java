@@ -24,10 +24,6 @@ public class cliente {
 
     static final String IP_SERVER = "127.0.0.1";
     static final int PUERTO = 5555;
-    static final int PALABRAS_POR_BLOQUE = 20;
-
-    private static volatile boolean pausado = false;
-    private static volatile boolean terminado = false;
 
     private static volatile DataOutputStream outGlobal = null;
 
@@ -100,17 +96,13 @@ public class cliente {
                 System.out.println("Stream REANUDADO");
                 System.out.flush();
             }
-        } else if ("s".equals(linea)) {
-            outGlobal.writeUTF(CTRL_SLOW);
-            System.out.println("Solicitud modo lento enviada");
-            System.out.flush();
         } else if ("q".equals(linea)) {
             terminado = true;
             outGlobal.writeUTF(CTRL_CLOSE_CLI);
             System.out.println("Cerrando...");
             System.out.flush();
         } else {
-            System.out.println("Comando desconocido. Usa 'p', 's' o 'q'");
+            System.out.println("Comando desconocido. Usa 'p' o 'q'");
             System.out.flush();
         }
     }
