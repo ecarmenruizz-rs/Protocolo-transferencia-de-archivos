@@ -14,16 +14,16 @@ El sistema sigue un modelo multi hilo con desacoplamiento de entrada y salida.
 - Conectividad: Acceso al puerto 1099 ( se puede configurar en el código).
 
 4. Instrucciones de lanzamiento
-Es necesario tener 
-Compilación, desde la raíz del proyecto o la carpeta de fuentes:    
-Javac servidor,java  
-Javac cliente.java
-Javac servidorImplements.java
-Javac servidorInterfaz.java 
-Ejecución del servidor:   
-java servidor
-Ejecución del cliente; en un terminal distinto (puede ser otra máquina que tiene que configurar la IP correcta).
-Java cliente
+Es necesario tener: 
+Compilación, desde la raíz del proyecto o la carpeta de fuentes:     
+Javac servidor.java       
+Javac cliente.java       
+Javac servidorImplements.java       
+Javac servidorInterfaz.java     
+Ejecución del servidor:            
+java servidor                        
+Ejecución del cliente; en un terminal distinto (puede ser otra máquina que tiene que configurar la IP correcta:                
+Java cliente                    
 
 5.Ejemplos de uso (interfaz cliente)
 Una vez que se inició la sesión con el ID “jefe”, el cliente puede interactuar con los siguientes comandos por teclado:
